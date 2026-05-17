@@ -1,0 +1,23 @@
+ERP Database    ---> SQL Server
+     ↓
+Python ETL Scripts  
+     ↓
+PostgreSQL Data Warehouse
+     ↓
+dbt Transformations
+     ↓
+Power BI Dashboards 
+
+
+
+PostgreSQL data model  : 
+
+bronze 
+silver
+gold
+
+
+
+
+
+
