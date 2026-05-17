@@ -1,22 +1,7 @@
-"""
-load_addresses.py
-
-Loads Addresses.csv into the Supabase bronze.erp_addresses table.
-Improvements over v1:
-  - Env var validation at startup
-  - Proper logging instead of silent execution
-  - Batched upserts to avoid request size limits
-  - Error handling at each stage (file, transform, DB)
-  - Typo fix: 'longitiude' -> 'longitude'
-  - numpy dependency removed
-  - Pathlib-based file path (no hardcoded relative paths)
-  - __main__ guard
-"""
-
 import logging
 import os
 from pathlib import Path
-
+import math
 import pandas as pd
 from dotenv import load_dotenv
 from supabase import create_client, Client
@@ -33,29 +18,14 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
-CSV_PATH = Path(__file__).parent / "Addresses.csv"  # always relative to THIS file
+CSV_PATH = Path("C:\\Users\\musaa\\jal-warehouse\\kaggle-data\\Addresses.csv")
 SCHEMA = "bronze"
-TABLE = "erp_addresses"
+TABLE = "bronze_erp_addresses"
 BATCH_SIZE = 500  # rows per upsert request — tune based on row width
-
-RENAME_MAP = {
-    "ADDRESSID": "address_id",
-    "CITY": "city",
-    "POSTALCODE": "postal_code",          # fixed typo: 'posta_code' -> 'postal_code'
-    "STREET": "street",
-    "BUILDING": "building",
-    "COUNTRY": "country",
-    "REGION": "region",
-    "ADDRESSTYPE": "address_type",
-    "VALIDITY_STARTDATE": "validity_start_date",
-    "VALIDITY_ENDDATE": "validity_end_date",
-    "LATITUDE": "latitude",
-    "LONGITUDE": "longitude",             # fixed typo: 'longitiude' -> 'longitude'
-}
 
 
 # ---------------------------------------------------------------------------
-# Helper functions — each does one thing, making the main() easy to read
+# Helper functions — each does one thing, making main() easy to read
 # ---------------------------------------------------------------------------
 
 def load_env() -> tuple[str, str]:
@@ -64,9 +34,6 @@ def load_env() -> tuple[str, str]:
     Raises EnvironmentError early — before any DB connection is attempted —
     so the failure message is clear and actionable.
     """
-
-
-    
     load_dotenv()
 
     url = os.getenv("DB_URL")
@@ -105,22 +72,6 @@ def read_csv(path: Path) -> pd.DataFrame:
     return df
 
 
-def transform(df: pd.DataFrame) -> list[dict]:
-    """
-    Rename columns to snake_case and convert to a list of dicts.
-    Validates that all expected source columns are actually present in the file.
-    """
-    missing_cols = set(RENAME_MAP.keys()) - set(df.columns)
-    if missing_cols:
-        raise ValueError(
-            f"CSV is missing expected columns: {missing_cols}. "
-            "Check the file or update RENAME_MAP."
-        )
-
-    df = df.rename(columns=RENAME_MAP)
-    return df.to_dict(orient="records")
-
-
 def upsert_batches(client: Client, records: list[dict]) -> None:
     """
     Send records to Supabase in chunks of BATCH_SIZE.
@@ -131,28 +82,30 @@ def upsert_batches(client: Client, records: list[dict]) -> None:
     progress logging and partial-failure visibility.
     """
     total = len(records)
-    batches = range(0, total, BATCH_SIZE)
+    num_batches = (total + BATCH_SIZE - 1) // BATCH_SIZE
 
-    for i, start in enumerate(batches, start=1):
+    for i, start in enumerate(range(0, total, BATCH_SIZE), start=1):
         batch = records[start : start + BATCH_SIZE]
         end = min(start + BATCH_SIZE, total)
 
         try:
-            response = (
+            (
                 client.schema(SCHEMA)
                 .table(TABLE)
                 .upsert(batch)
                 .execute()
             )
-            # Supabase-py raises on HTTP errors, but log the response status too
             logger.info(
                 "Batch %d/%d — rows %d–%d upserted successfully.",
-                i, len(batches), start + 1, end,
+                i, num_batches, start + 1, end,
             )
         except Exception as e:
             # Don't swallow the error — re-raise after logging so the caller
             # knows exactly which batch failed and why.
-            logger.error("Batch %d/%d failed (rows %d–%d): %s", i, len(batches), start + 1, end, e)
+            logger.error(
+                "Batch %d/%d failed (rows %d–%d): %s",
+                i, num_batches, start + 1, end, e,
+            )
             raise
 
 
@@ -172,13 +125,23 @@ def main() -> None:
     df = read_csv(CSV_PATH)
 
     # 3. Transform
-    records = transform(df)
-    logger.info("Transformed %d records. Beginning upsert.", len(records))
+    records = [
+        {k: (None if isinstance(v, float) and math.isnan(v) else v)
+         for k, v in row.items()}
+        for row in df.to_dict(orient="records")
+    ]
+    logger.info("Converted DataFrame to %d records.", len(records))
+    logger.info("Converted DataFrame to %d records.", len(records))
+
+    logger.info("Converted DataFrame to %d records.", len(records))
 
     # 4. Load
     upsert_batches(client, records)
 
-    logger.info("Pipeline complete. %d records loaded into %s.%s.", len(records), SCHEMA, TABLE)
+    logger.info(
+        "Pipeline complete. %d records loaded into %s.%s.",
+        len(records), SCHEMA, TABLE,
+    )
 
 
 if __name__ == "__main__":
