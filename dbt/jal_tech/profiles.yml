@@ -1,0 +1,13 @@
+jal_tech:
+  outputs:
+    dev:
+      dbname: postgres
+      host: {{ env_var('DBT_DB_HOST') }}
+      pass: {{ env_var('DBT_DEV_PASS') }}
+      port: 5432
+      schema: bronze
+      threads: 1
+      type: postgres
+      user: musaab404
+  target: dev
+
