@@ -5,3 +5,11 @@ logs/
 dbt/target/
 dbt/logs/
 .env
+**/.env
+**/*.logs
+**/__pycache__/
+#dbt files  !!!! need to add the full path
+
+target/
+dbt_packages/
+logs/
