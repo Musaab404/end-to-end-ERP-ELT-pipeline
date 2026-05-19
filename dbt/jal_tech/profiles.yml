@@ -2,12 +2,11 @@ jal_tech:
   outputs:
     dev:
       dbname: postgres
-      host: {{ env_var('DBT_DB_HOST') }}
-      pass: {{ env_var('DBT_DEV_PASS') }}
+      host: "{{ env_var('DBT_DEV_HOST') }}" # The hostname of the database you want to connect to.
+      pass: "{{ env_var('DBT_DEV_PASS') }}" # The password for the database user.
       port: 5432
       schema: bronze
       threads: 1
       type: postgres
-      user: musaab404
+      user: "{{ env_var('DBT_DEV_USER') }}" # The username to connect to the database.
   target: dev
-
