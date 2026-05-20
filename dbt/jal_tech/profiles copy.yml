@@ -1,0 +1,12 @@
+jal_tech:
+  outputs:
+    dev:
+      dbname: postgres
+      host: ********************* # The hostname of the database you want to connect to.
+      pass: ********************** # The password for the database user.
+      port: 5432
+      schema: public
+      threads: 1
+      type: postgres
+      user: *********************** # The username to connect to the database.
+  target: dev

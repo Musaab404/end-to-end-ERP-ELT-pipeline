@@ -1,0 +1,1 @@
+SELECT * FROM postgres.bronzw.bronze_erp_addresses ;
