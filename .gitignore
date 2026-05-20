@@ -8,6 +8,7 @@ dbt/logs/
 **/.env
 **/*.logs
 **/__pycache__/
+C:\Users\musaa\jal-warehouse\dbt\jal_tech\profiles.yml
 #dbt files  !!!! need to add the full path
 
 target/
@@ -15,4 +16,3 @@ dbt_packages/
 logs/
 .user.yml
 C:\Users\musaa\jal-warehouse\dbt\jal_tech\.user.yml 
-C:\Users\musaa\jal-warehouse\dbt\jal_tech\profiles.yml
