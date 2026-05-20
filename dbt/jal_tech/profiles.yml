@@ -5,7 +5,7 @@ jal_tech:
       host: "{{ env_var('DBT_DEV_HOST') }}" # The hostname of the database you want to connect to.
       pass: "{{ env_var('DBT_DEV_PASS') }}" # The password for the database user.
       port: 5432
-      schema: bronze
+      schema: public
       threads: 1
       type: postgres
       user: "{{ env_var('DBT_DEV_USER') }}" # The username to connect to the database.
